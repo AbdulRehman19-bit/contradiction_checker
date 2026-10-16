@@ -92,3 +92,4 @@ Single-side rules: Dislike HEDGED_NONE -> SELF_CONFLICT; Dislike NONE + explicit
 - 2026-10-16: Built config loader, io, normalise, segment, nonefilter + 38 tests. On the 300-row sample the Dislike column splits into NONE 79, CONTENT 217, HEDGED_NONE 2, NODATA 2.
 - 2026-10-16: Built aspects, stance, rules, engine, report, CLI. 64 tests pass. Sample result: CONSISTENT 173, NO_COMPLAINT 76, TENSION 32, MISPLACED_POSITIVE 10, MISPLACED_NEGATIVE 5, SELF_CONFLICT 2, NO_DATA 2, CONTRADICTION 0. Run takes ~11 s.
 - 2026-10-16: Plan finalized; phases added; direct same-aspect contradiction made the core target.
+- 2026-10-16: Added `app/streamlit_app.py` (upload or pick from data/, sheet + column pickers, live YAML lexicon editor, product-word box, label/confidence/search filters, row click -> full parse trace, xlsx download). Run: `.\.venv\Scripts\streamlit run app/streamlit_app.py`.
