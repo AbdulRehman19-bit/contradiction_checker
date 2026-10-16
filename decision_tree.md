@@ -78,6 +78,12 @@ _Last updated: 2026-10-16_
 - **Chosen:** thin UI over the same `analyze_dataframe` API the CLI uses.
 - **Why:** one engine, two front ends; no logic duplicated in the UI.
 
+## D15. Clause-level none detection, config-driven
+- **Chosen:** classify each clause (NONE / HEDGE / COMPLAINT / PRAISE / NODATA) against YAML regexes, then combine per answer. A neutral clause opened by a contrast marker (but, however) counts as a complaint.
+- **Rejected:** one regex over the whole answer; sentiment-model scoring.
+- **Why:** separates "Nothing, just needs more X" (hedged) from "Nothing, it's very good" (praise) with no product words. "only" was dropped from the complaint cues because "only pleasure" is praise.
+- **Known limit:** "No chocolate flavor" is correctly CONTENT (an absence complaint), so none-patterns must stay narrow.
+
 ## Log
 
 - 2026-10-16: D12–D14 added; scaffold and venv created, dependencies verified.

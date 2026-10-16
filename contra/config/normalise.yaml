@@ -1,0 +1,33 @@
+# Text normalisation settings (generic English; edit freely, no code change needed).
+
+# Characters mapped to plain ASCII before matching.
+char_map:
+  "’": "'"
+  "‘": "'"
+  "“": '"'
+  "”": '"'
+  "–": "-"
+  "—": "-"
+
+# Irregular contractions. Regular "n't" -> " not" and "'re/'ve/'ll/'d/'m" are handled in code.
+irregular_contractions:
+  "can't": "can not"
+  "cannot": "can not"
+  "won't": "will not"
+  "shan't": "shall not"
+  "ain't": "is not"
+  "let's": "let us"
+  "i'm": "i am"
+  "it's": "it is"
+  "that's": "that is"
+  "there's": "there is"
+  "what's": "what is"
+  "he's": "he is"
+  "she's": "she is"
+
+# Very small English stopword list, used ONLY to guess whether an answer is English.
+stopwords: [the, a, an, and, of, to, is, it, in, this, that, i, very, with, for, on, are, as, be, its, my, me, not, no, but, too, more, was, so, have, has, like, good, nothing, much]
+
+# An answer with >= min_words words and a stopword ratio below this is marked LOW_CONFIDENCE_LANG.
+lang_min_words: 4
+lang_min_stop_ratio: 0.08

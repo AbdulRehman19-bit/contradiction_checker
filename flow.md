@@ -53,10 +53,10 @@ Python 3.11.9, `.venv` created. Installed: pandas, openpyxl, spaCy + `en_core_we
 
 | # | Stage | Module | Input -> Output | Phase | Status |
 |---|-------|--------|-----------------|-------|--------|
-| 1 | Ingest | `io.py` | xlsx/csv -> DataFrame (+ auto-detect columns) | 1 | not started |
-| 2 | Normalise | `normalise.py` | text -> cleaned text + offsets (typo fix OFF by default, corrections logged) | 1 | not started |
-| 3 | Clause split | `segment.py` | text -> clauses with offsets | 1 | not started |
-| 4 | None detector | `nonefilter.py` | answer -> NONE / HEDGED_NONE / CONTENT | 1 | not started |
+| 1 | Ingest | `io.py` | xlsx/csv -> DataFrame (+ auto-detect columns) | 1 | done |
+| 2 | Normalise | `normalise.py` | text -> cleaned text + offsets (typo fix not built yet, off by default) | 1 | done |
+| 3 | Clause split | `segment.py` | text -> clauses with offsets | 1 | done |
+| 4 | None detector | `nonefilter.py` | answer -> NONE / HEDGED_NONE / NODATA / CONTENT | 1 | done |
 | 5 | Aspect extraction | `aspects.py` | clause -> head + phrase | 1 | not started |
 | 6 | Stance | `stance.py` | clause -> polarity, negation, strength | 1 (basic) / 3 (full) | not started |
 | 7 | Clustering | `cluster.py` | aspects -> groups + hierarchy | 3 | not started |
@@ -77,4 +77,5 @@ Python 3.11.9, `.venv` created. Installed: pandas, openpyxl, spaCy + `en_core_we
 ## Change log
 
 - 2026-10-16: File created.
+- 2026-10-16: Built config loader, io, normalise, segment, nonefilter + 38 tests. On the 300-row sample the Dislike column splits into NONE 79, CONTENT 217, HEDGED_NONE 2, NODATA 2.
 - 2026-10-16: Plan finalized; phases added; direct same-aspect contradiction made the core target.
