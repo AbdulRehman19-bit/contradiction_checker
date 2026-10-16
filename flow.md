@@ -30,6 +30,13 @@ read -> normalise -> clause split -> none-filter -> aspect extraction -> stance 
 | 4 | Theme-code adapter, `--explain`, README, different-domain fixtures | done |
 | UI | Streamlit frontend (`app/streamlit_app.py`): upload file, pick sheet/columns, edit YAML lexicons live, run, filter/review results, download xlsx. Built right after Phase 1 so v1 results are visible | after Phase 1 |
 
+## Data profile (Phase 0, `data/File for uploading 1.xlsx`, Sheet1)
+- 300 rows, 2 columns (LIKE / DISLIKE `- value`), 2 blank Dislike cells -> `NO_DATA`.
+- Dislike starts with a none-phrase: 75 rows (25%), matches the spec.
+- Rows sharing a content word across fields: 52 (spec estimated ~35; depends on stopword list).
+- Median length: Like 9 words, Dislike 6 words.
+- Observation: few literal "I like X / I don't like X" pairs. Real conflicts are subtler: e.g. Like "white chocolate center is very good" vs Dislike "can't taste the speculoos"; Like "speculoos flavor" vs Dislike "white chocolate taste fades into the background"; Like "mild taste, balanced" vs Dislike "white chocolate barely detectable". Negation-on-same-aspect and presence/absence markers (barely, can't taste, fades) are therefore needed in v1, not only v3.
+
 ## Folder layout
 ```
 data/        <- PUT YOUR INPUT FILE HERE (git-ignored)
