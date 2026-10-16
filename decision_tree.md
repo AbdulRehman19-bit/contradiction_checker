@@ -84,6 +84,25 @@ _Last updated: 2026-10-16_
 - **Why:** separates "Nothing, just needs more X" (hedged) from "Nothing, it's very good" (praise) with no product words. "only" was dropped from the complaint cues because "only pleasure" is praise.
 - **Known limit:** "No chocolate flavor" is correctly CONTENT (an absence complaint), so none-patterns must stay narrow.
 
+## D16. Learning the "product noun" from the data instead of hard-coding it
+- **Chosen:** nouns that respondents point at with this/these/that/those ("these cereals", "this product") are treated as the product itself and ignored as aspects. Optional `product_terms` list in YAML for manual override.
+- **Rejected:** document-frequency alone (cereal 18% vs chocolate 20%: no threshold separates them); hard-coding "cereal".
+- **Why:** without it "the cereal" matched as SAME aspect and produced a false CONTRADICTION.
+- **Revisit if:** another dataset's product word is not referred to with demonstratives.
+
+## D17. Stance is per clause, aspect match is per noun set
+- **Chosen:** one stance per clause applied to all its aspects; aspects compared as noun sets (SAME = equal, PARENT_CHILD = subset or YAML hierarchy, SIBLING = same head with different modifiers).
+- **Rejected:** per-aspect stance via dependency paths (more precise, much more code).
+- **Why:** clauses are short in survey answers; precision is protected by requiring SAME + explicit + non-mixed for CONTRADICTION.
+- **Known limit:** a clause praising one aspect and criticising another without a comma or "but" will mix up stances.
+
+## D18. Absence markers absorb presence words
+- **Chosen:** when ABSENT / DEFICIT / EXCESS fires in a clause, plain PRESENT hits in that clause are dropped ("barely detectable" is absence, not mixed).
+- **Why:** otherwise "detectable" counted as a conflicting signal and blocked a true contradiction.
+
+## D19. Result on the sample: 0 CONTRADICTION
+- The 300 rows contain no literal same-aspect opposite pair; the closest ones are parent/child (taste vs sweetness, speculoos vs white chocolate taste) and are reported as TENSION. This matches the precision-first goal and is reported honestly, not tuned away.
+
 ## Log
 
 - 2026-10-16: D12–D14 added; scaffold and venv created, dependencies verified.

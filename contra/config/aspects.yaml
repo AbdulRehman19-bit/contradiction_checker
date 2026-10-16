@@ -1,0 +1,72 @@
+# Aspect extraction settings (generic English; no product words).
+
+# Nouns that never name a product aspect (too generic). Extra corpus-frequent words are added
+# automatically at run time (see generic_df_ratio).
+generic_nouns: [product, thing, things, item, way, time, lot, kind, type, one, something, everything, anything, nothing,
+                overall, experience, whole, aspect, part, bit, moment, day, people, person, point, case, idea, fact, brand]
+generic_df_ratio: 0.5       # a noun in >= 50% of all answers is treated as non-discriminative (set 1.0 to disable)
+# Nouns respondents point at with this/these/that/those are the product itself ("this cereal"): learned per dataset.
+demonstrative_min_count: 4
+demonstrative_ratio: 0.1
+# Optional manual list of product-level words to ignore as aspects (edit per survey in the UI/YAML; empty by default).
+product_terms: []
+
+# Adjective -> attribute noun (so "too sweet" and "the sweetness" name the same aspect).
+adjective_attributes:
+  sweet: sweetness
+  sugary: sweetness
+  sugar: sweetness
+  sweetener: sweetness
+  salty: saltiness
+  bitter: bitterness
+  sour: sourness
+  crunchy: crunch
+  crispy: crunch
+  crisp: crunch
+  crispness: crunch
+  crunchiness: crunch
+  crunch: crunch
+  small: size
+  big: size
+  large: size
+  tiny: size
+  expensive: price
+  cheap: price
+  pricey: price
+  soft: texture
+  hard: texture
+  dark: color
+  colourful: color
+  colorful: color
+  colour: color
+  color: color
+  creamy: creaminess
+  smooth: smoothness
+  fast: speed
+  slow: speed
+  heavy: weight
+  light: weight
+
+# Generic parent -> children (child aspects are narrower facets of the parent).
+hierarchy:
+  taste: [sweetness, saltiness, bitterness, sourness, aftertaste]
+  texture: [crunch, smoothness, creaminess]
+  look: [color, size]
+
+# Canonical aliases (surface noun -> canonical aspect), applied after lemmatising.
+aliases:
+  flavour: taste
+  flavor: taste
+  flavours: taste
+  flavors: taste
+  tastes: taste
+  aroma: smell
+  fragrance: smell
+  scent: smell
+  centre: center
+  inside: center
+  filling: center
+  texture: texture
+  cost: price
+  worth: price
+  value: price

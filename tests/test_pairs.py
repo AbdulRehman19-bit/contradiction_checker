@@ -1,0 +1,56 @@
+"""Spec fixtures (from the sample data) + a different-domain set to prove nothing is cereal specific."""
+import pytest
+
+from contra import analyze_pair
+
+
+def label(cfg, like, dislike):
+    return analyze_pair(like, dislike, {"cfg": cfg})
+
+
+@pytest.mark.parametrize("like,dislike,expected", [
+    ("I love the speculoos flavor!", "Nothing", "NO_COMPLAINT"),
+    ("Good taste", "Nothing, just needs a little more white chocolate in the filling.", "SELF_CONFLICT"),
+    ("Good taste", "Nothing, it's very good.", "NO_COMPLAINT"),
+    ("Good taste", "Nothing is perfect", "SELF_CONFLICT"),
+    ("Good taste", "Honestly, I have nothing against this product. It's crunchy and I particularly like the taste.", "MISPLACED_POSITIVE"),
+    ("Good taste", "Nothing to complain about, I'll buy this product again. Very satisfied.", "MISPLACED_POSITIVE"),
+    ("Good taste", "I loved it", "MISPLACED_POSITIVE"),
+    ("Everything about this product is well done. A little sweet, I think, but oh well.", "Too long to wait", "MISPLACED_NEGATIVE"),
+    ("The taste", "Sugar", "TENSION"),
+    ("The taste", "The taste", "BARE_ASPECT_CONFLICT"),
+    ("I like the taste", "I don't like the taste", "CONTRADICTION"),
+    ("The taste is great", "The taste is awful", "CONTRADICTION"),
+    ("The white chocolate is clearly noticeable", "The white chocolate is barely detectable", "CONTRADICTION"),
+    ("White chocolate brings a smooth, sweet note that makes the overall flavour enjoyable.",
+     "The excessive sugary taste takes away from the overall enjoyment.", "TENSION"),
+    ("I love the crispness, the melt-in-your-mouth chocolate inside, and the taste of speculoos",
+     "There isn't enough filling to balance the flavors.", "CONSISTENT"),
+    ("The creamy white chocolate flavour stands out", "The taste of speculoos", "CONSISTENT"),
+    ("Tasty", None, "NO_DATA"),
+    (None, "Too sweet", "NO_DATA"),
+])
+def test_label(cfg, like, dislike, expected):
+    assert label(cfg, like, dislike).label == expected
+
+
+def test_same_direction_not_contradiction(cfg):
+    assert label(cfg, "A little sweet but fine", "Too sweet").label != "CONTRADICTION"
+
+
+@pytest.mark.parametrize("like,dislike,expected", [
+    ("The battery life is great", "The battery life is terrible", "CONTRADICTION"),
+    ("Friendly staff", "Nothing", "NO_COMPLAINT"),
+    ("Great service at the hotel", "The service was not good", "CONTRADICTION"),
+    ("I like the app design", "The app design is not to my liking", "CONTRADICTION"),
+    ("Fast delivery", "The screen is too small", "CONSISTENT"),
+    ("Good battery", "Nothing, but the charger is slow", "SELF_CONFLICT"),
+])
+def test_other_domains(cfg, like, dislike, expected):
+    assert label(cfg, like, dislike).label == expected
+
+
+def test_result_has_evidence_and_rule(cfg):
+    r = label(cfg, "I like the taste", "I don't like the taste")
+    assert r.like_evidence and r.dislike_evidence and r.rule_ids and r.explanation
+    assert r.aspect == "taste"

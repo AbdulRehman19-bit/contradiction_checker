@@ -1,0 +1,27 @@
+# Scoring weights. confidence = relation_weight * min(strength_like, strength_dislike) * rule_weight * lang_ok
+
+relation_weight:
+  SAME: 1.0
+  PARENT_CHILD: 0.6
+  SIBLING: 0.0
+
+# Per-label base weight for answers decided by a rule on a single side.
+rule_weight:
+  CONTRADICTION: 1.0
+  BARE_ASPECT_CONFLICT: 0.8
+  TENSION: 0.8
+  SELF_CONFLICT: 0.9
+  MISPLACED_POSITIVE: 0.9
+  MISPLACED_NEGATIVE: 0.7
+  NO_COMPLAINT: 0.9
+
+lang_penalty: 0.5        # multiplier when either answer is LOW_CONFIDENCE_LANG
+
+buckets:
+  high: 0.7
+  med: 0.4
+
+# A CONTRADICTION needs both sides at least this strong; otherwise it is downgraded to TENSION (precision first).
+min_contradiction_strength: 0.5
+
+severity_order: [CONTRADICTION, BARE_ASPECT_CONFLICT, SELF_CONFLICT, MISPLACED_POSITIVE, MISPLACED_NEGATIVE, TENSION, CONSISTENT, NO_COMPLAINT, NO_DATA]

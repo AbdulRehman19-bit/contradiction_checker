@@ -1,0 +1,10 @@
+# Explanation sentences (templates, not generated text). Placeholders: {aspect} {like} {dislike} {rule}
+CONTRADICTION: 'Both answers talk about "{aspect}" but disagree: Like says "{like}", Dislike says "{dislike}".'
+BARE_ASPECT_CONFLICT: 'Both answers only name "{aspect}" ("{like}" / "{dislike}"), so the same thing is both liked and disliked.'
+TENSION: 'Related aspects pull in different directions around "{aspect}": Like says "{like}", Dislike says "{dislike}". Needs human review.'
+SELF_CONFLICT: 'The Dislike answer starts with "nothing" but then raises a point: "{dislike}".'
+MISPLACED_POSITIVE: 'The Dislike answer is actually praise: "{dislike}".'
+MISPLACED_NEGATIVE: 'The Like answer contains a complaint: "{like}".'
+CONSISTENT: 'No conflict found between the two answers.'
+NO_COMPLAINT: 'Dislike is a clean "nothing / no complaints".'
+NO_DATA: 'One or both answers are blank or unusable.'

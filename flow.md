@@ -57,12 +57,24 @@ Python 3.11.9, `.venv` created. Installed: pandas, openpyxl, spaCy + `en_core_we
 | 2 | Normalise | `normalise.py` | text -> cleaned text + offsets (typo fix not built yet, off by default) | 1 | done |
 | 3 | Clause split | `segment.py` | text -> clauses with offsets | 1 | done |
 | 4 | None detector | `nonefilter.py` | answer -> NONE / HEDGED_NONE / NODATA / CONTENT | 1 | done |
-| 5 | Aspect extraction | `aspects.py` | clause -> head + phrase | 1 | not started |
-| 6 | Stance | `stance.py` | clause -> polarity, negation, strength | 1 (basic) / 3 (full) | not started |
-| 7 | Clustering | `cluster.py` | aspects -> groups + hierarchy | 3 | not started |
-| 8 | Pairing + rules | `rules.py` | stances -> label | 1 / 3 | not started |
-| 9 | Scoring | `score.py` | -> confidence/bucket (calibrated on gold) | 1 / 3 | not started |
-| 10 | Output | `report.py` | -> Results/Review/Summary/Aspects + jsonl | 1 | not started |
+| 5 | Aspect extraction | `aspects.py` | clause -> noun set (head + noun modifiers, "X of Y" folded), adjective->attribute, bare flag | 1 | done |
+| 6 | Stance | `stance.py` | clause -> polarity, direction, strength (prior -> markers -> negation -> intensity -> mixed check) | 1 | done |
+| 7 | Clustering | `cluster.py` | aspects -> groups (v1 uses alias map + small YAML hierarchy instead) | 3 | not started |
+| 8 | Pairing + rules | `rules.py` | stances -> label | 1 | done |
+| 9 | Scoring | `engine.py` (weights.yaml) | -> confidence/bucket; calibration on gold still to do | 1 / 3 | done (uncalibrated) |
+| 10 | Output | `report.py`, `cli.py`, `engine.py` | -> Results/Review/Summary/Aspects xlsx + jsonl; `--explain ROW` | 1 | done |
+
+## Pair outcome table (v1, in `rules._pair_outcome`)
+| Aspect relation | Like | Dislike | Result |
+|---|---|---|---|
+| SAME | POS / PRESENT / BALANCED (explicit, strength >= 0.5) | NEG / ABSENT (explicit, not mixed) | CONTRADICTION |
+| PARENT_CHILD or weak | same | NEG / ABSENT | TENSION |
+| any | POS side | EXCESS / DEFICIT | TENSION |
+| SAME | bare aspect | bare aspect | BARE_ASPECT_CONFLICT |
+| PARENT_CHILD | bare | bare | TENSION |
+| SAME | implicit (prior only) | explicit | TENSION (low) |
+| SIBLING / UNRELATED | any | any | no finding |
+Single-side rules: Dislike HEDGED_NONE -> SELF_CONFLICT; Dislike NONE + explicit praise -> MISPLACED_POSITIVE else NO_COMPLAINT; Like clause with explicit complaint -> MISPLACED_NEGATIVE.
 
 ## Direct-contradiction flow (v1 core)
 1. Split Like and Dislike into clauses.
@@ -78,4 +90,5 @@ Python 3.11.9, `.venv` created. Installed: pandas, openpyxl, spaCy + `en_core_we
 
 - 2026-10-16: File created.
 - 2026-10-16: Built config loader, io, normalise, segment, nonefilter + 38 tests. On the 300-row sample the Dislike column splits into NONE 79, CONTENT 217, HEDGED_NONE 2, NODATA 2.
+- 2026-10-16: Built aspects, stance, rules, engine, report, CLI. 64 tests pass. Sample result: CONSISTENT 173, NO_COMPLAINT 76, TENSION 32, MISPLACED_POSITIVE 10, MISPLACED_NEGATIVE 5, SELF_CONFLICT 2, NO_DATA 2, CONTRADICTION 0. Run takes ~11 s.
 - 2026-10-16: Plan finalized; phases added; direct same-aspect contradiction made the core target.

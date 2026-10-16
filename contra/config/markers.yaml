@@ -1,0 +1,74 @@
+# Stance markers. Everything here is generic English, NOT product specific. Edit freely.
+#
+# Directions (what a clause claims about its aspect):
+#   POS      generic praise            NEG      generic criticism
+#   PRESENT  notably present/strong    ABSENT   barely there / missing / not detectable
+#   EXCESS   too much                  DEFICIT  not enough
+#   BALANCED right amount
+# Each marker: id, direction, weight (0..1), patterns (regexes on lower-cased, contraction-expanded text),
+# negatable (default true: a negator just before it flips it).
+
+negators: ['not', 'no', 'never', 'without', 'neither', 'nor', 'nothing', 'hardly any', 'rather than', 'instead of']
+negation_window_words: 3
+
+# Negation flips: direction -> (new direction, weight multiplier)
+negation_flip:
+  POS: [NEG, 0.9]
+  NEG: [POS, 0.6]
+  PRESENT: [ABSENT, 0.9]
+  ABSENT: [PRESENT, 0.6]
+  EXCESS: [BALANCED, 0.8]
+  DEFICIT: [BALANCED, 0.7]
+  BALANCED: [NEG, 0.7]
+
+downtoners: ['a little', 'a bit', 'slightly', 'somewhat', 'kind of', 'sort of', 'fairly', 'rather']
+downtoner_multiplier: 0.6
+intensifiers: ['very', 'extremely', 'really', 'super', 'incredibly', 'truly', 'absolutely', 'particularly', 'so']
+intensifier_multiplier: 1.3
+
+# Prior strength when a clause has no marker (the Like/Dislike field itself is the only signal).
+prior_strength: 0.3
+
+markers:
+  # ---- absence / deficit (checked before generic words) ----
+  - {id: ABS_CANNOT, direction: ABSENT, weight: 0.9, negatable: false,
+     patterns: ['can not (?:really )?(?:taste|detect|find|notice|feel|smell|see|perceive|distinguish)', 'could not (?:really )?(?:taste|detect|find|notice|feel|smell|see)']}
+  - {id: ABS_BARELY, direction: ABSENT, weight: 0.85, negatable: false,
+     patterns: ['\bbarely\b', '\bhardly\b', '\bscarcely\b', 'almost none', 'almost no ', 'no recognisable', 'no recognizable', 'not recognisable', '\babsent\b', 'fades? (?:away|into the background)?', 'disappears?', '\bdrowned? out\b', 'overshadowed', 'gets lost', 'lost in']}
+  - {id: DEF_NOT_ENOUGH, direction: DEFICIT, weight: 0.85, negatable: false,
+     patterns: ['not enough', 'too little', 'too few', 'insufficient', '\black(?:s|ing)?\b', '\bmissing\b', 'could use more', 'need(?:s|ed)? more', 'needs? a (?:little |bit )?more', 'more \w+(?: \w+){0,3} would', 'would (?:be )?(?:better|improve|benefit)', 'could be more', 'wish (?:there )?(?:was|were) more', 'want(?:ed)? more', 'a bit more']}
+  # ---- excess ----
+  - {id: EXC_TOO, direction: EXCESS, weight: 0.9,
+     patterns: ['\btoo (?!much of a good)(?!good\b)(?!bad\b)\w+', '\bexcessive(?:ly)?\b', '\boverly\b', '\bcloying\b', '\bsickening\b', '\boverpowering\b', '\boverwhelming\b', '\bover-?powers?\b', '\bdominates?\b', 'a bit much', 'too much', 'leans? (?:a bit |too |way )?(?:too )?heavily', 'toned down', 'tone down', 'reduce[d]?', 'less \w+ would', 'too strongly']}
+  # ---- hedged mild complaint (weak) ----
+  - {id: HEDGE_MILD, direction: EXCESS, weight: 0.4, negatable: false,
+     patterns: ['(?:a little|a bit|slightly|somewhat) (?!more|less|too)(?!(?:good|nice|great|crunchy|crispy|creamy|smooth|tasty|like|love|enjoy|prefer|appreciate)\b)\w+', 'oh well', 'could be better', 'not perfect', 'not the best']}
+  # ---- balanced ----
+  - {id: BAL, direction: BALANCED, weight: 0.8,
+     patterns: ['\bbalanced\b', 'just right', 'perfect balance', 'well[- ]balanced', 'not too \w+', 'neither too \w+ nor too \w+']}
+  # ---- presence ----
+  - {id: PRES, direction: PRESENT, weight: 0.7,
+     patterns: ['\bnoticeable\b', '\bdetectable\b', '\bdistinct(?:ive|ly)?\b', 'stands? out', 'comes? through', '\bpronounced\b', '\bclearly\b', '\bdefinitely\b', '\bpresent\b', '\bstrong(?:ly)?\b', '\brecognis?able\b', '\brecogniz?able\b']}
+  # ---- explicit non-liking ----
+  - {id: NEG_DISLIKE, direction: NEG, weight: 0.9,
+     patterns: ['\bdislike[sd]?\b', '\bhate[sd]?\b', "do not like", "did not like", "does not like", '\bnot to my liking\b', '\bnot a fan\b', '\bunappealing\b', '\bdisgusting\b']}
+  # ---- generic polarity ----
+  - {id: NEG_WORD, direction: NEG, weight: 0.8,
+     patterns: ['\bawful\b', '\bterrible\b', '\bbad\b', '\bhorrible\b', '\bdisappoint\w*\b', '\bnasty\b', '\bunpleasant\b', '\bbland\b', '\bpoor\b', '\bannoying\b', '\bunpleasant\b', '\bsticks? to\b']}
+  - {id: POS_LIKE, direction: POS, weight: 0.85,
+     patterns: ['\blove[sd]?\b', '\blike[sd]?\b', '\benjoy(?:s|ed|able)?\b', '\bappreciate[sd]?\b', 'nothing against', 'no complaints? about']}
+  - {id: POS_WORD, direction: POS, weight: 0.8,
+     patterns: ['\bgreat\b', '\bgood\b', '\bdelicious\b', '\btasty\b', '\bperfect\b', '\bamazing\b', '\bexcellent\b', '\bwonderful\b', '\bnice\b', '\bpleasant\b', '\bsatisfying\b', '\bfantastic\b', '\bawesome\b', '\byummy\b', '\bbeautiful\b', '\bfavou?rite\b', '\bappealing\b', '\bappealed\b', '\bsatisfaction\b', '\bsatisfactory\b', '\bsatisfied\b', '\bpleased\b', '\bsmooth\b', '\bcreamy\b']}
+
+# Explicit "I am praising" markers, used for MISPLACED_POSITIVE (a Dislike answer that is really praise).
+# Plain "good" is NOT enough: "Nothing, it's very good" stays NO_COMPLAINT.
+misplaced_positive_markers:
+  - '\b(?:i )?(?:really |particularly |truly )?(?:love|loved|like|liked|enjoy|enjoyed)\b'
+  - 'buy (?:this |it |them )?(?:product )?again'
+  - '\bvery satisfied\b'
+  - '\bsatisfied\b'
+  - '\brecommend\b'
+  - 'appealed to me'
+  - 'enjoyable in every'
+  - 'to my satisfaction'
+  - 'no (?:particular |real )?(?:faults?|complaints?)'
