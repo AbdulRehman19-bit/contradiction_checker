@@ -127,6 +127,11 @@ def decide(like: AnswerAnalysis, dis: AnswerAnalysis, cfg: dict) -> tuple[list[C
         if live and not complaining and praising and any(p.search(" ".join(c.clause.text for c in praising)) for p in pos_markers):
             cands.append(Candidate("MISPLACED_POSITIVE", "R_MISPLACED_POS_ALL_PRAISE", 0.8, dislike_ev=dis.text))
 
+    # ---- Like side: a bare "nothing" in the Like box means the respondent put a no-answer where a like belongs ----
+    lk = like.none
+    if lk.kind == NONE and not lk.has_praise and re.match(r"\W*(nothing|none|nope|no)\b", like.text, re.I) and dk.kind == CONTENT:
+        cands.append(Candidate("MISPLACED_NEGATIVE", "R_NONE_IN_LIKE", 0.6, like_ev=like.text))
+
     # ---- Like side: complaint hiding in the Like answer ----
     for c in like.clauses:
         st = c.stance

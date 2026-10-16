@@ -86,6 +86,10 @@ def detect_none(value, cfg: dict) -> NoneResult:
 
     if labels and all(k == "NODATA" for k in labels):
         return NoneResult(NODATA, rule_id="NF_NODATA", **base)
+    if "HEDGE" in labels and praise and not complaints:
+        # "Nothing is perfect, but this comes close": the hedge is followed by praise, so it is a (praising) none
+        return NoneResult(NONE, has_praise=True, none_clause=next(c.text for c, k in kinds if k == "HEDGE"),
+                          rule_id="NF_HEDGE_THEN_PRAISE", **base)
     if "HEDGE" in labels:
         return NoneResult(HEDGED_NONE, hedge_reason="hedge_phrase", rule_id="NF_HEDGE_PHRASE",
                           none_clause=next(c.text for c, k in kinds if k == "HEDGE"), **base)

@@ -6,6 +6,8 @@ fillers: [honestly, well, to be honest, frankly, personally, actually, i think, 
 
 # Clause is "nothing to say" -> pure NONE.
 none_patterns:
+  - '(?:i )?(?:can not|cannot) complain|kuch (?:nahi|nahin)|koi (?:masla|masla nahi|baat nahi)'
+  - 'no complaints so far|nothing so far|none so far'
   - '(?:i have )?(?:absolutely |literally )?(?:nothing|none|nil|nada)'
   - 'nope|nah|no'
   - 'rien|nada|nichts|niente|nulla|ninguno|ninguna'
@@ -37,6 +39,7 @@ none_patterns:
 
 # Clause means "no usable data" (unusable answer), not a real "none".
 nodata_patterns:
+  - '(?:i )?(?:have not|did not|do not) (?:tried|try) (?:it|this|them)?(?: yet)?|not tried(?: it)?(?: yet)?|no comment|no comments|no opinion'
   - 'n/?a'
   - '[asdfghjkl]{4,}|qwerty\w*|xxx+|test|lorem ipsum|\?+|\.+|-+'
   - 'na'
@@ -60,6 +63,6 @@ hedge_none_patterns:
 complaint_cues: [better, maybe, perhaps, need, needs, needed, should, could, would, wish, lack, lacks, lacking, missing, miss, improve, improved, improvement, more, less, too, bit, little, slightly, except, but, however, although, though, instead, rather, unfortunately, sadly, wrong, bad, worse, worst, hate, annoying, annoyed, disappointing, disappointed, disappoints, expensive, price, small, hard, soft, stick, sticks, sticky]
 
 # Words signalling praise inside a clause.
-praise_cues: [pleasure, enjoyable, good, great, nice, love, loved, like, liked, enjoy, enjoyed, delicious, tasty, perfect, excellent, amazing, wonderful, fantastic, awesome, happy, satisfied, satisfying, pleasant, appealed, recommend, favourite, favorite, best, yummy, crunchy, crispy, creamy, smooth, well]
+praise_cues: [close, best, pleasure, enjoyable, good, great, nice, love, loved, like, liked, enjoy, enjoyed, delicious, tasty, perfect, excellent, amazing, wonderful, fantastic, awesome, happy, satisfied, satisfying, pleasant, appealed, recommend, favourite, favorite, best, yummy, crunchy, crispy, creamy, smooth, well]
 
 

@@ -1,7 +1,7 @@
 # Clause segmentation. A clause is the unit for every later step.
 
 # Contrast markers: split BEFORE them and attach the marker to the following clause.
-contrast_markers: [but, however, although, though, yet, while, whereas, except]
+contrast_markers: [apart, but, however, although, though, yet, while, whereas, except]
 
 # Split characters / patterns (regex) that always end a clause.
 split_patterns:

@@ -36,7 +36,7 @@ markers:
   - {id: ABS_BARELY, direction: ABSENT, weight: 0.85, negatable: false,
      patterns: ['\bbarely\b', '\bhardly\b', '\bscarcely\b', 'almost none', 'almost no ', 'no recognisable', 'no recognizable', 'not recognisable', '\babsent\b', 'fades? (?:away|into the background)?', 'disappears?', '\bdrowned? out\b', 'overshadowed', 'gets lost', 'lost in']}
   - {id: DEF_NOT_ENOUGH, direction: DEFICIT, weight: 0.85, negatable: false,
-     patterns: ['not (?:\w+ )?enough', 'too little', 'too few', 'insufficient', '\black(?:s|ing)?\b', '\bmissing\b', 'could use more', 'need(?:s|ed)? more', 'needs? a (?:little |bit )?more', 'more \w+(?: \w+){0,3} would', 'would make\b.*\b(?:more|better)\b', 'would (?:be )?(?:better|improve|benefit)', 'could be more', 'wish (?:there )?(?:was|were) more', 'want(?:ed)? more', 'a bit more']}
+     patterns: ['not (?:\w+ )?enough', 'too little', 'too few', 'insufficient', '\black(?:s|ing)?\b', '\bmissing\b', 'could use more', 'need(?:s|ed)? more', 'needs? a (?:little |bit )?more', 'more \w+(?: \w+){0,3} would', 'would make\b.*\b(?:more|better)\b', 'would (?:be )?(?:better|improve|benefit)', 'could be more', '\badd (?:more|some)\b', '\bif (?:it|they|this|the \w+) (?:were|was|had|came)\b', 'wish (?:there )?(?:was|were) more', 'want(?:ed)? more', 'a bit more']}
   # ---- excess ----
   - {id: EXC_TOO, direction: EXCESS, weight: 0.9,
      patterns: ['\btoo (?!much of a good)(?!good\b)(?!bad\b)\w+', '\bexcessive(?:ly)?\b', '\boverly\b', '\bcloying\b', '\bsickening\b', '\boverpowering\b', '\boverwhelming\b', '\bover-?powers?\b', '\bdominates?\b', 'a bit much', 'too much', 'leans? (?:a bit |too |way )?(?:too )?heavily', 'toned down', 'tone down', 'reduc\w+', '\bless \w+ would', 'too strongly', '\bless (?:sugar\w*|sweet\w*|salt\w*|strong\w*|intense)\b', 'if it (?:were|was) (?:slightly |a bit )?less']}
@@ -52,6 +52,15 @@ markers:
   # ---- presence ----
   - {id: PRES, direction: PRESENT, weight: 0.7,
      patterns: ['\bnoticeable\b', '\bdetectable\b', '\bdistinct(?:ive|ly)?\b', 'stands? out', 'comes? through', '\bpronounced\b', '\bclearly\b', '\bdefinitely\b', '\bpresent\b', '\bstrong(?:ly)?\b', '\brecognis?able\b', '\brecogniz?able\b']}
+  # ---- generic bad events / phrases (negation-safe: a negator before them flips them) ----
+  - {id: NEG_EVENT, direction: NEG, weight: 0.8,
+     patterns: ['\bstopped working\b', '\bbroke\b', '\bdies\b', '\bdied\b', '\bfails?\b', '\bfailed\b', '\bcrash\w*', '\bfreez\w+', '\bglitch\w*',
+                '\bdrops?\b', '\bgone up in price\b', '\bprice (?:increase|hike|rise)\b', '\btook (?:days|weeks|months|hours)\b', '\btake[sn]? (?:\d+|two|three|a few|several) (?:days|weeks|months|hours)\b',
+                '\barrived late\b', '\bnever (?:arrive[sd]?|came|answered|replied|responded|worked)\b', '\black of\b', '\blocked me out\b', '\bnot much to\b',
+                '\bgripe\b', '\bdownsides?\b', '\bdrawbacks?\b', '\bhigh in sugar\b', '\bhard to find\b', '\bgrainy\b', '\bscratch\w*']}
+  - {id: POS_EVENT, direction: POS, weight: 0.8,
+     patterns: ['\bworks? like new\b', '\bmelts? in your mouth\b', '\bnever drops\b', '\balways on time\b', '\breplied within\b', '\bhighly recommend\w*', '\brecommend\w*',
+                '\b(?:10/10|5/5|five stars?|5 stars?)\b', '\bbest\b', '\bcomes? close\b', '\bhuge\b', '\binstant\w*', '\bquick to (?:respond|reply)\b', '\bstill works\b']}
   # ---- explicit non-liking ----
   - {id: NEG_DISLIKE, direction: NEG, weight: 0.9,
      patterns: ['\bdislike[sd]?\b', '\bhate[sd]?\b', "do not like", "did not like", "does not like", '\bnot to my liking\b', '\bnot a fan\b', '\bunappealing\b', '\bdisgusting\b']}
@@ -67,7 +76,7 @@ markers:
 # VADER is a static word list shipped with NLTK (not a model). Add your own survey words under extra_*.
 # A Dislike clause containing one of these only complains about part of the thing: a would-be CONTRADICTION becomes TENSION.
 # A clause opened by one of these words (as in 'great, except the battery') is itself a complaint.
-complaint_clause_markers: [except]
+complaint_clause_markers: [except, apart]
 
 partial_markers: [some, sometimes, occasionally, at times, a few, rarely, in places, in the dark, in low light]
 
@@ -75,10 +84,10 @@ sentiment_lexicon:
   use_vader: true
   vader_min_abs: 1.5
   skip: [shocking, like, love, 'no', not, nothing, 'yes', wow, ok, okay, fine, sorry, miss, mean, kind, share, trust, free, power, pretty, safe, sure, support, top, work, hope, wish, want]
-  extra_negative: [tiny, soggy, mushy, greasy, late, overcooked, undercooked, drains, drained, drain, limited, noisy, loud, cramped, dim,
+  extra_negative: [pricey, expensive, chalky, bland, mushy, messy, struggles, struggle, unreliable, buggy, clunky, disappointing, overpriced, noisy, dull, tiny, soggy, mushy, greasy, late, overcooked, undercooked, drains, drained, drain, limited, noisy, loud, cramped, dim,
                    laggy, lag, slow, stale, dry, smelly, sticky, crowded, flimsy, cold, uncomfortable, confusing, cluttered, tough, rubbery,
                    salty, burnt, soggy, thin, mushy, damaged, crushed, leaks, leaking, overpriced, tasteless, plain, boring, hard]
-  extra_positive: [soft, generous, early, quiet, fresh, fast, responsive, intuitive, spacious, comfortable, helpful, friendly, tasty,
+  extra_positive: [instant, affordable, rich, reliable, secure, huge, lovely, convenient, soft, generous, early, quiet, fresh, fast, responsive, intuitive, spacious, comfortable, helpful, friendly, tasty,
                    crunchy, crispy, creamy, smooth, clean, bright, lasts, tender, juicy, fair, reasonable, cozy, cosy, light]
 
 # Explicit "I am praising" markers, used for MISPLACED_POSITIVE (a Dislike answer that is really praise).
@@ -102,4 +111,8 @@ misplaced_positive_markers:
   - '\bpleasant\b'
   - '\bdelighted\b'
   - 'great experience'
-  - 'no (?:particular |real )?(?:faults?|complaints?)'
+  - 'no (?:particular |real )?faults?'
+  - '\bbest\b'
+  - '\bhighly recommend\w*'
+  - '\bcomes? close\b'
+  - '10/10|5/5'
