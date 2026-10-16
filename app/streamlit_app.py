@@ -15,7 +15,7 @@ sys.path.insert(0, str(ROOT))
 from contra.aspects import nlp_status  # noqa: E402
 from contra.config import load_config  # noqa: E402
 from contra.engine import analyze_dataframe, explain_pair, fit_generic_nouns  # noqa: E402
-from contra.io import ColumnDetectionError, detect_columns  # noqa: E402
+from contra.io import RAW, ColumnDetectionError, detect_columns  # noqa: E402
 from contra.report import build_sheets, write_workbook  # noqa: E402
 
 DATA_DIR = ROOT / "data"
@@ -50,9 +50,9 @@ if suffix in {".xlsx", ".xls"}:
         source.seek(0)
     with st.sidebar:
         sheet = st.selectbox("Sheet", sheets, index=sheets.index("Sheet1") if "Sheet1" in sheets else 0)
-    df = pd.read_excel(source, sheet_name=sheet)
+    df = pd.read_excel(source, sheet_name=sheet, **RAW)
 else:
-    df = pd.read_csv(source, sep="\t" if suffix == ".tsv" else ",")
+    df = pd.read_csv(source, sep="\t" if suffix == ".tsv" else ",", **RAW)
 
 cols = [str(c) for c in df.columns]
 try:

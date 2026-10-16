@@ -10,6 +10,10 @@ LIKE_RE = re.compile(r"\b(like[sd]?|love[sd]?|enjoy\w*|good|positive|best|favou?
 DISLIKE_RE = re.compile(r"\b(dislike[sd]?|hate[sd]?|improv\w*|bad|negative|worst|annoy\w*|least)\b", re.I)
 
 
+# Keep the respondent's exact text: pandas would otherwise turn "N/A", "None", "NA", "null"... into empty cells.
+RAW = {"keep_default_na": False, "na_values": []}
+
+
 class ColumnDetectionError(ValueError):
     pass
 
@@ -17,8 +21,8 @@ class ColumnDetectionError(ValueError):
 def read_table(path: str | Path, sheet: str | int | None = None) -> pd.DataFrame:
     path = Path(path)
     if path.suffix.lower() in {".csv", ".tsv"}:
-        return pd.read_csv(path, sep="\t" if path.suffix.lower() == ".tsv" else ",")
-    return pd.read_excel(path, sheet_name=sheet if sheet is not None else 0)
+        return pd.read_csv(path, sep="\t" if path.suffix.lower() == ".tsv" else ",", **RAW)
+    return pd.read_excel(path, sheet_name=sheet if sheet is not None else 0, **RAW)
 
 
 def list_sheets(path: str | Path) -> list[str]:

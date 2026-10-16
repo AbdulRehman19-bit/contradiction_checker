@@ -50,3 +50,11 @@ def test_detect_columns():
     assert detect_columns(df) == tuple(df.columns)
     with pytest.raises(ColumnDetectionError):
         detect_columns(pd.DataFrame(columns=["a", "b"]))
+
+
+def test_read_keeps_na_and_none_text(tmp_path):
+    from contra.io import read_table
+    f = tmp_path / "a.csv"
+    f.write_text("LIKE,DISLIKE\ngood,N/A\ngreat,None\nnice,\nok,NA\n", encoding="utf-8")
+    df = read_table(f)
+    assert list(df["DISLIKE"]) == ["N/A", "None", "", "NA"]
