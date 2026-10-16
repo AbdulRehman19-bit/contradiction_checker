@@ -67,18 +67,20 @@ with st.sidebar:
 base_cfg = load_config()
 overrides: dict[str, dict] = {}
 with st.sidebar:
-    st.header("2. Rules (editable, no code)")
-    st.caption("Change a word list and press Run. Edits apply to this session only; save to the YAML files in contra/config to keep them.")
-    product_terms = st.text_input("Product words to ignore as aspects (comma separated, optional)", "")
-    stem = st.selectbox("Lexicon file", sorted(base_cfg))
-    text = st.text_area(f"{stem}.yaml", yaml.safe_dump(base_cfg[stem], sort_keys=False, allow_unicode=True), height=300)
-    try:
-        edited = yaml.safe_load(text) or {}
-        if edited != base_cfg[stem]:
-            overrides[stem] = edited
-            st.success(f"{stem}.yaml modified for this run")
-    except yaml.YAMLError as exc:
-        st.error(f"Invalid YAML, ignored: {exc}")
+    st.header("2. Options")
+    product_terms = st.text_input("Product words to ignore as aspects (optional, comma separated)", "")
+    with st.expander("Advanced: edit the word lists (YAML)", expanded=False):
+        st.caption("All matching rules are plain word lists, not code. Change one and press Run; edits apply to this session only. "
+                   "Save to contra/config/*.yaml to keep them.")
+        stem = st.selectbox("Lexicon file", sorted(base_cfg))
+        text = st.text_area(f"{stem}.yaml", yaml.safe_dump(base_cfg[stem], sort_keys=False, allow_unicode=True), height=300)
+        try:
+            edited = yaml.safe_load(text) or {}
+            if edited != base_cfg[stem]:
+                overrides[stem] = edited
+                st.success(f"{stem}.yaml modified for this run")
+        except yaml.YAMLError as exc:
+            st.error(f"Invalid YAML, ignored: {exc}")
     run = st.button("Run analysis", type="primary", width="stretch")
 
 cfg = load_config(overrides=overrides)
