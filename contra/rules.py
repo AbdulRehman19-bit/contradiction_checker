@@ -4,7 +4,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
-from .aspects import ParsedClause, relation
+from .aspects import ParsedClause, facet_words, relation
 from .nonefilter import CONTENT, HEDGED_NONE, NODATA, NONE, NoneResult
 from .segment import Clause
 from .stance import Stance
@@ -44,16 +44,49 @@ def _pair_outcome(sl: Stance, sd: Stance, rel: str, bare_l: bool, bare_d: bool, 
     if not (sl.polarity == "+" and sd.polarity == "-"):
         return None
     if bare_l and bare_d:
-        return ("BARE_ASPECT_CONFLICT", "R_BARE_BARE") if rel == "SAME" else ("TENSION", "R_BARE_PARENT_CHILD")
+        return ("CONTRADICTION", "R_BARE_BARE") if rel == "SAME" else ("TENSION", "R_BARE_PARENT_CHILD")
     if not (sl.explicit and sd.explicit):
-        return ("TENSION", "R_IMPLICIT_SIDE") if rel == "SAME" else None
+        return ("TENSION", "R_IMPLICIT_SIDE") if (rel == "SAME" or (rel == "PARENT_CHILD" and bare_l)) else None
     if sl.direction in POS_SIDE and sd.direction in {"NEG", "ABSENT"}:
         if rel == "SAME" and min(sl.strength, sd.strength) >= min_contra and not (sl.mixed or sd.mixed):
             return ("CONTRADICTION", "R_POS_VS_NEG" if sd.direction == "NEG" else "R_POS_VS_ABSENT")
         return ("TENSION", "R_POS_VS_NEG_WEAK")
     if sd.direction in {"EXCESS", "DEFICIT"}:
+        # "not too sweet" vs "overly sweet": the Like side states the very thing the Dislike side denies
+        if sl.direction == "BALANCED" and sd.direction == "EXCESS" and rel == "SAME" and min(sl.strength, sd.strength) >= min_contra:
+            return ("CONTRADICTION", "R_BALANCED_VS_EXCESS")
         return ("TENSION", "R_POS_VS_AMOUNT")
     return None
+
+
+def _specific(aspects, facets: frozenset) -> set:
+    return {n for a in aspects for n in a.nouns if n not in facets}
+
+
+def _subject_set(ca: ClauseAnalysis, ans: AnswerAnalysis, facets: frozenset) -> set:
+    """Specific subjects (speculoos, chocolate...) of a clause; falls back to the whole answer when the clause names none."""
+    s = _specific(ca.parsed.aspects, facets)
+    return s or _specific([a for c in ans.clauses for a in c.parsed.aspects], facets)
+
+
+def _refine(rel: str, la, da, sl: set, sd: set, facets: frozenset) -> str:
+    """Refine the noun-set relation with subjects and facets.
+    1. different facets (smell vs taste) -> siblings;
+    2. aspects that both name a specific subject are compared on those subjects (cinnamon vs speculoos -> siblings);
+    3. otherwise the subjects of the surrounding clause / answer decide (speculoos vs white chocolate -> siblings)."""
+    if rel == "UNRELATED":
+        return rel
+    fa, fb = la.nouns & facets, da.nouns & facets
+    if fa and fb and fa.isdisjoint(fb) and not (la.bare and da.bare):   # bare taste/sugar pairs stay linked by the hierarchy
+        return "SIBLING"
+    sa, sb = la.nouns - facets, da.nouns - facets
+    if sa and sb:
+        return "SIBLING" if sa.isdisjoint(sb) else ("SAME" if rel == "SAME" else "PARENT_CHILD")
+    if sl and sd:
+        if sl.isdisjoint(sd):
+            return "SIBLING"
+        return "SAME" if rel == "SAME" else "PARENT_CHILD"
+    return rel
 
 
 def decide(like: AnswerAnalysis, dis: AnswerAnalysis, cfg: dict) -> tuple[list[Candidate], str]:
@@ -95,6 +128,7 @@ def decide(like: AnswerAnalysis, dis: AnswerAnalysis, cfg: dict) -> tuple[list[C
             break
 
     # ---- Pairing across fields ----
+    facets = facet_words(cfg)
     dis_has_praise = any(c.stance.explicit and c.stance.polarity == "+" for c in dis.clauses)
     if dk.kind in {CONTENT, HEDGED_NONE}:
         for lc in like.clauses:
@@ -105,16 +139,19 @@ def decide(like: AnswerAnalysis, dis: AnswerAnalysis, cfg: dict) -> tuple[list[C
                     continue
                 if dis_has_praise and not dc.stance.explicit:
                     continue    # bare/prior-only clause inside an answer that is really praise
+                sl_set, sd_set = _subject_set(lc, like, facets), _subject_set(dc, dis, facets)
                 for la in lc.parsed.aspects:
                     for da in dc.parsed.aspects:
-                        rel = relation(la, da, cfg)
+                        rel = relation(la, da, cfg, allow_hierarchy=la.bare and da.bare)
+                        rel = _refine(rel, la, da, sl_set, sd_set, facets)
                         if rel in {"SIBLING", "UNRELATED"}:
                             continue
                         out = _pair_outcome(lc.stance, dc.stance, rel, la.bare, da.bare, min_contra)
                         if out is None:
                             continue
                         label, rule = out
-                        strength = min(lc.stance.strength, dc.stance.strength) * w["relation_weight"][rel]
+                        base = 0.7 if rule == "R_BARE_BARE" else min(lc.stance.strength, dc.stance.strength)
+                        strength = base * w["relation_weight"][rel]
                         cands.append(Candidate(label, rule, strength, rel, aspect=la.head if rel == "SAME" else f"{la.head}~{da.head}",
                                                like_ev=lc.clause.text, dislike_ev=dc.clause.text,
                                                stances={"like": lc.stance.rule_id, "dislike": dc.stance.rule_id}))

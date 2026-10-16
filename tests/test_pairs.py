@@ -18,14 +18,19 @@ def label(cfg, like, dislike):
     ("Good taste", "I loved it", "MISPLACED_POSITIVE"),
     ("Everything about this product is well done. A little sweet, I think, but oh well.", "Too long to wait", "MISPLACED_NEGATIVE"),
     ("The taste", "Sugar", "TENSION"),
-    ("The taste", "The taste", "BARE_ASPECT_CONFLICT"),
+    ("The taste", "The taste", "CONTRADICTION"),
+    ("The simple, not-too-sweet taste", "All I can think of is the overly sweet taste", "CONTRADICTION"),
+    ("Speculoos flavour paired with a satisfying crunch", "It is just a little bit too sweet", "CONSISTENT"),
+    ("It has a good speculoos flavor", "White chocolate notes are too subtle", "CONSISTENT"),
+    ("Good taste", "There was nothing I disliked, and the cereal delivered an enjoyable experience.", "MISPLACED_POSITIVE"),
+    ("Good taste", "I did not find any aspect of the cereal disappointing.", "NO_COMPLAINT"),
     ("I like the taste", "I don't like the taste", "CONTRADICTION"),
     ("The taste is great", "The taste is awful", "CONTRADICTION"),
     ("The white chocolate is clearly noticeable", "The white chocolate is barely detectable", "CONTRADICTION"),
     ("White chocolate brings a smooth, sweet note that makes the overall flavour enjoyable.",
      "The excessive sugary taste takes away from the overall enjoyment.", "TENSION"),
     ("I love the crispness, the melt-in-your-mouth chocolate inside, and the taste of speculoos",
-     "There isn't enough filling to balance the flavors.", "CONSISTENT"),
+     "There isn't enough filling to balance the flavors.", "TENSION"),
     ("The creamy white chocolate flavour stands out", "The taste of speculoos", "CONSISTENT"),
     ("Tasty", None, "NO_DATA"),
     (None, "Too sweet", "NO_DATA"),
@@ -54,3 +59,8 @@ def test_result_has_evidence_and_rule(cfg):
     r = label(cfg, "I like the taste", "I don't like the taste")
     assert r.like_evidence and r.dislike_evidence and r.rule_ids and r.explanation
     assert r.aspect == "taste"
+
+
+def test_bare_conflict_is_contradiction_with_flag(cfg):
+    r = label(cfg, "The taste and texture", "The taste")
+    assert r.label == "CONTRADICTION" and "BARE_ASPECT_CONFLICT" in r.extra_flags

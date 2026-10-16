@@ -75,6 +75,8 @@ def analyze_pair(like, dislike, ctx: dict | None = None) -> PairResult:
     conf = round(min(conf, 1.0), 3)
     extra_flags = sorted({c.label for c in cands if c.label != primary.label and c.label not in {"CONSISTENT"}} |
                          ({"BARE_ASPECT_CONFLICT"} - {primary.label} if any(c.label == "BARE_ASPECT_CONFLICT" for c in cands) else set()))
+    if primary.rule_id == "R_BARE_BARE":
+        extra_flags.append("BARE_ASPECT_CONFLICT")
     if lang_flag:
         extra_flags.append("LOW_CONFIDENCE_LANG")
     tpl = cfg["templates"].get(primary.label, "")

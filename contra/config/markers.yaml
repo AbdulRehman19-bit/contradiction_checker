@@ -45,7 +45,7 @@ markers:
      patterns: ['(?:a little|a bit|slightly|somewhat) (?!more|less|too)(?!(?:good|nice|great|crunchy|crispy|creamy|smooth|tasty|like|love|enjoy|prefer|appreciate)\b)\w+', 'oh well', 'could be better', 'not perfect', 'not the best']}
   # ---- balanced ----
   - {id: BAL, direction: BALANCED, weight: 0.8,
-     patterns: ['\bbalanced\b', 'just right', 'perfect balance', 'well[- ]balanced', 'not too \w+', 'neither too \w+ nor too \w+']}
+     patterns: ['\bbalanced\b', 'just right', 'perfect balance', 'well[- ]balanced', 'not[- ]too[- ]\w+', 'neither too \w+ nor too \w+']}
   # ---- presence ----
   - {id: PRES, direction: PRESENT, weight: 0.7,
      patterns: ['\bnoticeable\b', '\bdetectable\b', '\bdistinct(?:ive|ly)?\b', 'stands? out', 'comes? through', '\bpronounced\b', '\bclearly\b', '\bdefinitely\b', '\bpresent\b', '\bstrong(?:ly)?\b', '\brecognis?able\b', '\brecogniz?able\b']}
@@ -71,4 +71,8 @@ misplaced_positive_markers:
   - 'appealed to me'
   - 'enjoyable in every'
   - 'to my satisfaction'
+  - '\benjoyable\b'
+  - '\bpleasant\b'
+  - '\bdelighted\b'
+  - 'great experience'
   - 'no (?:particular |real )?(?:faults?|complaints?)'

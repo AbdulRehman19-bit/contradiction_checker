@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import pandas as pd
 import sys
 
 from .config import load_config
@@ -36,7 +37,11 @@ def main(argv=None) -> int:
         return 0
     if a.evaluate:
         from .gold import evaluate
-        for split, rep in evaluate(a.evaluate).items():
+        # re-run the CURRENT rules on the input, then compare with the human labels in the gold file
+        fresh = analyze_dataframe(df, like, dis, cfg)
+        preds = pd.DataFrame({"row_id": fresh.index, "pred_label": fresh["label"].values, "confidence": fresh["confidence"].values,
+                              "bucket": fresh["bucket"].values, "rule_ids": fresh["rule_ids"].values})
+        for split, rep in evaluate(a.evaluate, preds).items():
             print(f"=== {split} (n={rep['n']}) ===")
             print(rep["per_label"].round(2).to_string(index=False))
             print(rep["confusion"].to_string())

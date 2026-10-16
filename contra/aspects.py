@@ -70,7 +70,7 @@ def _parse_spacy(doc, cfg: dict, extra: frozenset) -> ParsedClause:
         if chunk.start in consumed:
             continue
         root = chunk.root
-        if root.pos_ == "PRON" or _generic(root.lemma_, cfg, extra):
+        if root.pos_ == "PRON":
             continue
         toks = [t for t in chunk if t.pos_ in {"NOUN", "PROPN"} and not _generic(t.lemma_, cfg, extra)]
         # "the taste of speculoos": fold the 'of' complement into the same aspect
@@ -80,15 +80,16 @@ def _parse_spacy(doc, cfg: dict, extra: frozenset) -> ParsedClause:
                     if pobj.dep_ == "pobj":
                         consumed.add(pobj.left_edge.i)
                         toks += [t for t in pobj.subtree if t.pos_ in {"NOUN", "PROPN"} and not _generic(t.lemma_, cfg, extra)]
-        if not toks:
-            continue
-        head = canon(root.lemma_, cfg)
-        nouns = frozenset(canon(t.lemma_, cfg) for t in toks) | {head}
-        out.aspects.append(Aspect(head=head, nouns=nouns, phrase=chunk.text))
         for t in chunk:  # adjective modifiers that map to an attribute ("sweet note" -> sweetness)
             if t.pos_ == "ADJ" and t.lemma_.lower() in attrs:
                 a = canon(t.lemma_, cfg)
                 out.aspects.append(Aspect(head=a, nouns=frozenset({a}), phrase=t.text))
+        if not toks:
+            continue
+        # a generic head ("combination of speculoos", "notes") lends the aspect to its specific nouns instead
+        head = canon(root.lemma_, cfg) if not _generic(root.lemma_, cfg, extra) else canon(toks[-1].lemma_, cfg)
+        nouns = frozenset(canon(t.lemma_, cfg) for t in toks) | {head}
+        out.aspects.append(Aspect(head=head, nouns=nouns, phrase=chunk.text))
     for t in doc:
         if t.pos_ == "ADJ":
             out.adjectives.append(t.lemma_.lower())
@@ -105,9 +106,8 @@ def _parse_spacy(doc, cfg: dict, extra: frozenset) -> ParsedClause:
             a = canon(lemma, cfg)
             out.aspects.append(Aspect(head=a, nouns=frozenset({a}), phrase=lemma))
             have.add(a)
-    if len(out.aspects) == 1 and not out.has_verb and not out.adjectives:
-        a = out.aspects[0]
-        out.aspects[0] = Aspect(a.head, a.nouns, a.phrase, bare=True)
+    if out.aspects and not out.has_verb and not out.adjectives:      # nothing but noun phrases ("The taste and texture")
+        out.aspects = [Aspect(a.head, a.nouns, a.phrase, bare=True) for a in out.aspects]
     return out
 
 
@@ -126,13 +126,23 @@ def _parse_fallback(text: str, cfg: dict, extra: frozenset) -> ParsedClause:
     return out
 
 
-def relation(a: Aspect, b: Aspect, cfg: dict | None = None) -> str:
-    """SAME / PARENT_CHILD / SIBLING / UNRELATED between two aspects."""
+def facet_words(cfg: dict) -> frozenset:
+    """Words naming a *facet* of the product (taste, texture, sweetness...) rather than a specific subject."""
+    a = cfg["aspects"]
+    words = set(a.get("facets", []))
+    words |= set(a.get("adjective_attributes", {}).values())
+    for parent, kids in (a.get("hierarchy", {}) or {}).items():
+        words |= {parent, *kids}
+    return frozenset(words)
+
+
+def relation(a: Aspect, b: Aspect, cfg: dict | None = None, allow_hierarchy: bool = False) -> str:
+    """SAME / PARENT_CHILD / SIBLING / UNRELATED between two aspects (noun-set level; rules.py refines with clause context)."""
     if a.nouns == b.nouns:
         return "SAME"
     if a.nouns < b.nouns or b.nouns < a.nouns:
         return "PARENT_CHILD"
-    for parent, children in ((cfg or {}).get("aspects", {}).get("hierarchy", {}) or {}).items():
+    for parent, children in (((cfg or {}).get("aspects", {}).get("hierarchy", {}) or {}).items() if allow_hierarchy else []):
         kids = set(children)
         if (a.head == parent and b.head in kids) or (b.head == parent and a.head in kids):
             return "PARENT_CHILD"

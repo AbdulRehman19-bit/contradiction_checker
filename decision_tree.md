@@ -113,3 +113,13 @@ _Last updated: 2026-10-16_
 - **Chosen:** auto-run on load, full colour-coded table by default, three plain filters (Show / How sure / Search). Colours and plain-language meanings come from `colors.yaml`, shared by Excel and UI.
 - **Rejected:** a Run button and label-code filters (jargon such as "R_POS_VS_NEG" or raw bucket names).
 - **Why:** the user wants to see all data first and narrow down; labels need a meaning visible next to each colour.
+
+## D21. Rules changed because of the user's gold labels (dev split only)
+Evidence: 46 dev rows labelled by the user; before the changes TENSION precision was 0.42 (11 false alarms).
+- **Different subjects are siblings.** "speculoos taste" vs "white chocolate taste" share the word "taste" but are different things. Aspects are compared on their *specific subjects* (nouns that are not facet words such as taste, texture, sweetness); different subjects or different facets (smell vs taste) -> SIBLING -> no finding. Facet words live in `aspects.yaml` (`facets`).
+- **Hierarchy (taste -> sweetness) only links two bare aspects.** The user labelled "subtle speculoos flavour" vs "a little too sweet" as consistent, so the hierarchy no longer pairs explicit statements.
+- **Bare/bare same aspect is a CONTRADICTION** (user: "same bare aspect is liked and disliked"). It keeps the extra flag BARE_ASPECT_CONFLICT. Replaces the earlier plan to make it only a flag.
+- **"not-too-sweet" vs "overly sweet" is a CONTRADICTION** (balanced vs excess on the same aspect). This reverses D7, which had capped it at TENSION.
+- **More "nothing" phrasings** (there was nothing I disliked, I did not find any aspect disappointing, without any noticeable drawbacks) and more praise markers (enjoyable, pleasant) for MISPLACED_POSITIVE / NO_COMPLAINT.
+- **Evaluation re-runs the current rules** on the input file; the Predictions sheet in the gold file is a frozen snapshot and is not used.
+- **Honest numbers:** dev accuracy 0.98 (tuned on it, optimistic) vs held-out test accuracy 0.70 (44 rows). Test is the real estimate. I looked at test row ids once for reporting and did not tune on them. A fresh batch of labels is needed before tuning further.
