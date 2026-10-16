@@ -1,0 +1,15 @@
+# Colours + plain-language meaning per label. Used by the Excel report and the Streamlit table.
+# fill = row background (light), strong = badge / header colour.
+labels:
+  CONTRADICTION:        {fill: "FFC7CE", strong: "C00000", meaning: "Same thing is liked and disliked"}
+  BARE_ASPECT_CONFLICT: {fill: "F8CBAD", strong: "ED7D31", meaning: "Same bare aspect named in both answers"}
+  SELF_CONFLICT:        {fill: "E4DFEC", strong: "7030A0", meaning: "Dislike says 'nothing' then complains"}
+  MISPLACED_POSITIVE:   {fill: "DDEBF7", strong: "2E75B6", meaning: "Dislike answer is really praise"}
+  MISPLACED_NEGATIVE:   {fill: "FCE4D6", strong: "C55A11", meaning: "Like answer contains a complaint"}
+  TENSION:              {fill: "FFEB9C", strong: "BF9000", meaning: "Related points pull apart - please review"}
+  CONSISTENT:           {fill: "E2EFDA", strong: "548235", meaning: "No conflict found"}
+  NO_COMPLAINT:         {fill: "EDEDED", strong: "7F7F7F", meaning: "Dislike is a clean 'nothing'"}
+  NO_DATA:              {fill: "D9D9D9", strong: "404040", meaning: "Blank or unusable answer"}
+
+# "Only rows to review" in the UI hides these.
+not_a_problem: [CONSISTENT, NO_COMPLAINT, NO_DATA]

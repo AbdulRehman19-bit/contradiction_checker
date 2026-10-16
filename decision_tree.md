@@ -108,3 +108,8 @@ _Last updated: 2026-10-16_
 - 2026-10-16: D12–D14 added; scaffold and venv created, dependencies verified.
 - 2026-10-16: File created; D1–D4 seeded from the spec.
 - 2026-10-16: D5–D11 added after user clarification and review of the spec.
+
+## D20. UI: show everything first, filter second; colours live in config
+- **Chosen:** auto-run on load, full colour-coded table by default, three plain filters (Show / How sure / Search). Colours and plain-language meanings come from `colors.yaml`, shared by Excel and UI.
+- **Rejected:** a Run button and label-code filters (jargon such as "R_POS_VS_NEG" or raw bucket names).
+- **Why:** the user wants to see all data first and narrow down; labels need a meaning visible next to each colour.
