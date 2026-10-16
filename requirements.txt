@@ -1,0 +1,9 @@
+﻿pandas
+openpyxl
+spacy
+nltk
+rapidfuzz
+scikit-learn
+pytest
+PyYAML
+streamlit
