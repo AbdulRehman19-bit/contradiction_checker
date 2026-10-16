@@ -55,6 +55,8 @@ def classify_clause(clause: Clause, cfg: dict) -> str:
         return "NODATA"
     if _full(np_cfg["hedge_none_patterns"], t):
         return "HEDGE"
+    if _full(np_cfg.get("scoped_none_patterns", []), t):
+        return "PRAISE"      # "nothing wrong with the taste": praise about one thing, not a blanket "no complaints"
     if _full(np_cfg["none_patterns"], t):
         return "NONE"
     words = set(t.split())

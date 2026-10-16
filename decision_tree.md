@@ -123,3 +123,17 @@ Evidence: 46 dev rows labelled by the user; before the changes TENSION precision
 - **More "nothing" phrasings** (there was nothing I disliked, I did not find any aspect disappointing, without any noticeable drawbacks) and more praise markers (enjoyable, pleasant) for MISPLACED_POSITIVE / NO_COMPLAINT.
 - **Evaluation re-runs the current rules** on the input file; the Predictions sheet in the gold file is a frozen snapshot and is not used.
 - **Honest numbers:** dev accuracy 0.98 (tuned on it, optimistic) vs held-out test accuracy 0.70 (44 rows). Test is the real estimate. I looked at test row ids once for reporting and did not tune on them. A fresh batch of labels is needed before tuning further.
+
+## D22. Cross-domain rules added after the fresh multi-domain set (102 rows)
+Baseline of the previous rules on that set: 51% accuracy, only 2 of 28 contradictions found. The set mixes cereal with hotel, phone, app, laptop, food, beauty and service rows.
+- **Generic polarity lexicon** (VADER word list from NLTK + YAML extras `sentiment_lexicon` in markers.yaml). Last-resort layer used only when no structural marker covers the word. Not a model.
+- **Antonym predicates** (WordNet + `antonyms.yaml`): early/late, quiet/noisy, fast/slow... on the same aspect -> CONTRADICTION. A whole-product verdict with no topic ("Awful") is given the pseudo-aspect `@overall` and may oppose any predicate.
+- **Same predicate, one side negated** ("works well" / "does not work") -> CONTRADICTION.
+- **Same bare word in both boxes** ("Intuitive" / "Intuitive") -> CONTRADICTION; lone adjectives become bare aspects.
+- **Partial scope** ("some", "sometimes", "in the dark") downgrades CONTRADICTION to TENSION.
+- **Balanced/Present vs amount**: BALANCED vs EXCESS/DEFICIT and PRESENT vs DEFICIT on the same aspect -> CONTRADICTION (spec 3.8); generic praise vs amount stays TENSION.
+- **Rejected:** a rule "Like makes a claim (has a verb) + Dislike complains about the same aspect -> CONTRADICTION". It helped the fresh set but produced 3 false CONTRADICTIONs on the original data, so it was removed.
+- **Suggestions are complaints:** "Reducing the sugary notes would make it more enjoyable" is no longer misplaced praise.
+- **Honest numbers:** fresh set tuned on the even half (acc 0.84) and checked on the odd half (0.69, but I read its errors to find general patterns, so it is no longer pristine); whole set 0.77. Original gold: dev 0.98 (tuned), test 0.73 (not tuned on; was 0.70).
+- **Known limit / label policy:** the fresh set's labels treat some pairs as CONTRADICTION that the first gold labels called TENSION (degree words such as "subtle" vs "too sweet"). Two labelling policies cannot both be matched; this caps accuracy until one convention is chosen.
+- **Not solvable by rules:** world knowledge ("Thin walls, you can hear the neighbours" vs "Clean and quiet") and paraphrase ("Takes ages to charge" vs "Fast charging" is only partly covered).

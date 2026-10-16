@@ -8,6 +8,9 @@ fillers: [honestly, well, to be honest, frankly, personally, actually, i think, 
 none_patterns:
   - '(?:i have )?(?:absolutely |literally )?(?:nothing|none|nil|nada)'
   - 'nope|nah|no'
+  - 'rien|nada|nichts|niente|nulla|ninguno|ninguna'
+  - 'nothing (?:that )?comes to mind|nothing (?:that )?(?:i can|comes) (?:think of|to mind)'
+  - '(?:i )?(?:have )?(?:absolutely |literally )?no (?:complaints?|issues?|problems?)(?: at all)?'
   - 'not really|not particularly|not much'
   - '(?:i have )?nothing (?:to (?:say|complain about|dislike|criticise|criticize|mention|add|report)|displeases? me|displeased me|bothers? me|bothered me|negative|in particular|else|really)'
   - 'nothing (?:at all|whatsoever)'
@@ -35,12 +38,17 @@ none_patterns:
 # Clause means "no usable data" (unusable answer), not a real "none".
 nodata_patterns:
   - 'n/?a'
+  - '[asdfghjkl]{4,}|qwerty\w*|xxx+|test|lorem ipsum|\?+|\.+|-+'
   - 'na'
   - 'not applicable'
   - 'no idea'
   - 'idk'
   - 'dont know|do not know'
   - '-+|\.+|\?+|x+'
+
+# "Nothing wrong with X": a scoped statement about one thing, not a blanket "no complaints". Treated as ordinary praise.
+scoped_none_patterns:
+  - '(?:there (?:was|is) )?nothing (?:bad|wrong|negative) (?:with|about|in) (?:the|its|this|my|their|our) .+'
 
 # Phrases that LOOK like a none but are hedges ("Nothing is perfect") -> HEDGED_NONE, low confidence.
 hedge_none_patterns:
@@ -49,7 +57,7 @@ hedge_none_patterns:
   - 'nothing (?:is )?(?:ever )?(?:perfect|flawless)'
 
 # Words signalling a complaint / suggestion inside a clause that follows a none-phrase.
-complaint_cues: [need, needs, needed, should, could, would, wish, lack, lacks, lacking, missing, miss, improve, improved, improvement, more, less, too, bit, little, slightly, except, but, however, although, though, instead, rather, unfortunately, sadly, wrong, bad, worse, worst, hate, annoying, annoyed, disappointing, disappointed, disappoints, expensive, price, small, hard, soft, stick, sticks, sticky]
+complaint_cues: [better, maybe, perhaps, need, needs, needed, should, could, would, wish, lack, lacks, lacking, missing, miss, improve, improved, improvement, more, less, too, bit, little, slightly, except, but, however, although, though, instead, rather, unfortunately, sadly, wrong, bad, worse, worst, hate, annoying, annoyed, disappointing, disappointed, disappoints, expensive, price, small, hard, soft, stick, sticks, sticky]
 
 # Words signalling praise inside a clause.
 praise_cues: [pleasure, enjoyable, good, great, nice, love, loved, like, liked, enjoy, enjoyed, delicious, tasty, perfect, excellent, amazing, wonderful, fantastic, awesome, happy, satisfied, satisfying, pleasant, appealed, recommend, favourite, favorite, best, yummy, crunchy, crispy, creamy, smooth, well]

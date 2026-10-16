@@ -4,6 +4,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
+from .lexicon import poltable
 from .normalise import expand_contractions
 
 POSITIVE = {"POS", "PRESENT", "BALANCED"}
@@ -45,6 +46,19 @@ def _hits(text: str, markers: list[dict]) -> list[dict]:
     return sorted(kept, key=lambda h: h["start"])
 
 
+def _lexicon_hits(text: str, taken: list[dict], cfg: dict) -> list[dict]:
+    """Single words with a generic polarity (VADER + YAML extras) that no structural marker already covers."""
+    table = poltable(cfg)
+    out = []
+    for m in re.finditer(r"[a-z]+", text):
+        v = table.get(m.group(0))
+        if v is None or any(m.start() < k["end"] and k["start"] < m.end() for k in taken):
+            continue
+        out.append({"id": "LEX", "direction": "POS" if v > 0 else "NEG", "weight": abs(v), "negatable": True,
+                    "start": m.start(), "end": m.end(), "text": m.group(0)})
+    return out
+
+
 def _prev_words(text: str, pos: int, n: int) -> list[str]:
     return re.findall(r"[a-z']+", text[:pos])[-n:]
 
@@ -55,6 +69,7 @@ def assign_stance(clause_text: str, field_name: str, cfg: dict) -> Stance:
     text = expand_contractions(clause_text, cfg)
     prior_pol = "+" if field_name == "like" else "-"
     hits = _hits(text, mk["markers"])
+    hits = sorted(hits + _lexicon_hits(text, hits, cfg), key=lambda h: h["start"])
     negators = set(mk["negators"])
     window = mk.get("negation_window_words", 3)
     flipped = []

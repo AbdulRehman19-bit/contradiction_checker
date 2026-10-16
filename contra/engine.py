@@ -6,13 +6,13 @@ from dataclasses import dataclass, field
 
 import pandas as pd
 
-from .aspects import get_nlp, nlp_status, parse_clause
+from .aspects import Aspect, get_nlp, nlp_status, parse_clause
 from .config import load_config
 from .nonefilter import classify_clause, detect_none
 from .normalise import normalise
 from .rules import AnswerAnalysis, Candidate, ClauseAnalysis, decide
 from .segment import split_clauses
-from .stance import assign_stance
+from .stance import Stance, assign_stance
 
 
 @dataclass
@@ -40,8 +40,19 @@ def analyze_answer(value, field_name: str, cfg: dict, extra_generic: frozenset =
         kind = classify_clause(cl, cfg)
         if kind == "OTHER" and cl.marker:
             kind = "COMPLAINT"
-        ans.clauses.append(ClauseAnalysis(cl, parse_clause(cl.text, cfg, extra_generic),
-                                          assign_stance(cl.text, field_name, cfg), kind))
+        parsed = parse_clause(cl.text, cfg, extra_generic)
+        stance = assign_stance(cl.text, field_name, cfg)
+        attrs = cfg["aspects"]["adjective_attributes"]
+        if (field_name == "like" and stance.direction == "PRIOR" and not (parsed.aspects and all(a.bare for a in parsed.aspects))
+                and any(a in attrs for a in parsed.adjectives)):
+            # "Very crunchy": a Like answer that asserts an attribute is a claim that the attribute is present
+            stance = Stance("+", "PRESENT", 0.6, cl.text, "ST_ATTR_ADJ")
+        if cl.marker and cl.marker in cfg["markers"].get("complaint_clause_markers", []):
+            stance = Stance("-", "NEG", 0.6, cl.text, "ST_" + cl.marker.upper() + "_CLAUSE")    # "...great, except the battery"
+        if not parsed.aspects and stance.explicit and kind not in {"NONE", "NODATA", "HEDGE"}:
+            # a verdict with no topic ("I like it", "Awful") is about the product as a whole
+            parsed.aspects.append(Aspect(head="@overall", nouns=frozenset({"@overall"}), phrase="overall"))
+        ans.clauses.append(ClauseAnalysis(cl, parsed, stance, kind))
     return ans
 
 

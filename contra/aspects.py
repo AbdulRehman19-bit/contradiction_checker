@@ -4,6 +4,8 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
+from .lexicon import poltable
+
 _NLP = None
 _NLP_ERR: str | None = None
 
@@ -38,6 +40,8 @@ class ParsedClause:
     aspects: list[Aspect] = field(default_factory=list)
     has_verb: bool = False
     adjectives: list[str] = field(default_factory=list)
+    predicates: list[str] = field(default_factory=list)
+    negated: bool = False     # adjective / adverb / content-verb lemmas (for antonym checks)
 
 
 def canon(word: str, cfg: dict) -> str:
@@ -50,6 +54,15 @@ def canon(word: str, cfg: dict) -> str:
         base = w[:-4]
         w = a.get("adjective_attributes", {}).get(base, w)
     return a.get("aliases", {}).get(w, w)
+
+
+def key(tok, cfg: dict) -> str:
+    """Canonical key of a spaCy token: surface form first ("filling"), then its lemma ("fill")."""
+    low = tok.lower_
+    a = cfg["aspects"]
+    if low in a.get("aliases", {}) or low in a.get("adjective_attributes", {}):
+        return canon(low, cfg)
+    return canon(tok.lemma_, cfg)
 
 
 def _generic(word: str, cfg: dict, extra: frozenset) -> bool:
@@ -65,6 +78,7 @@ def _parse_spacy(doc, cfg: dict, extra: frozenset) -> ParsedClause:
     attrs = cfg["aspects"]["adjective_attributes"]
     out = ParsedClause()
     out.has_verb = any(t.pos_ in {"VERB", "AUX"} for t in doc)
+    out.negated = any(t.dep_ == "neg" or t.lower_ in {"not", "never", "no", "n't", "cannot"} for t in doc)
     consumed: set[int] = set()
     for chunk in doc.noun_chunks:
         if chunk.start in consumed:
@@ -87,12 +101,16 @@ def _parse_spacy(doc, cfg: dict, extra: frozenset) -> ParsedClause:
         if not toks:
             continue
         # a generic head ("combination of speculoos", "notes") lends the aspect to its specific nouns instead
-        head = canon(root.lemma_, cfg) if not _generic(root.lemma_, cfg, extra) else canon(toks[-1].lemma_, cfg)
-        nouns = frozenset(canon(t.lemma_, cfg) for t in toks) | {head}
+        head = key(root, cfg) if not _generic(root.lemma_, cfg, extra) else key(toks[-1], cfg)
+        nouns = frozenset(key(t, cfg) for t in toks) | {head}
         out.aspects.append(Aspect(head=head, nouns=nouns, phrase=chunk.text))
+    gverbs = {v.lower() for v in cfg["aspects"].get("generic_verbs", [])}
+    table = poltable(cfg)
     for t in doc:
-        if t.pos_ == "ADJ":
-            out.adjectives.append(t.lemma_.lower())
+        if t.pos_ == "ADJ" or (t.lower_ in attrs and t.pos_ in {"NOUN", "PROPN", "ADV", "X"}):
+            out.adjectives.append(t.lemma_.lower() if t.lemma_.lower() in attrs else t.lower_ if t.lower_ in attrs else t.lemma_.lower())
+        if t.lemma_.lower() not in gverbs and not t.is_stop and (t.pos_ in {"ADJ", "ADV", "VERB"} or t.lower_ in table):
+            out.predicates.append(t.lower_ if t.lower_ in table else t.lemma_.lower())
     # adjective-only clause ("too sweet"): the adjective names the aspect via the attribute map
     if not out.aspects:
         for lemma in out.adjectives:
@@ -106,7 +124,16 @@ def _parse_spacy(doc, cfg: dict, extra: frozenset) -> ParsedClause:
             a = canon(lemma, cfg)
             out.aspects.append(Aspect(head=a, nouns=frozenset({a}), phrase=lemma))
             have.add(a)
-    if out.aspects and not out.has_verb and not out.adjectives:      # nothing but noun phrases ("The taste and texture")
+    if not out.aspects:      # no noun at all ("Arrived early"): the main content verb names the aspect
+        for t in doc:
+            if t.pos_ == "VERB" and t.lemma_.lower() not in gverbs:
+                v = key(t, cfg)
+                out.aspects.append(Aspect(head=v, nouns=frozenset({v}), phrase=t.text))
+                break
+    if not out.aspects and out.adjectives and len(doc) <= 2:     # a lone adjective ("Intuitive")
+        v = canon(out.adjectives[0], cfg)
+        out.aspects.append(Aspect(head=v, nouns=frozenset({v}), phrase=out.adjectives[0], bare=True))
+    if out.aspects and not out.has_verb and not any(t.pos_ == "ADJ" for t in doc):      # nothing but noun phrases ("The taste and texture")
         out.aspects = [Aspect(a.head, a.nouns, a.phrase, bare=True) for a in out.aspects]
     return out
 

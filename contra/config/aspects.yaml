@@ -4,12 +4,14 @@
 # automatically at run time (see generic_df_ratio).
 generic_nouns: [product, thing, things, item, way, time, lot, kind, type, one, something, everything, anything, nothing,
                 overall, experience, whole, aspect, part, bit, moment, day, people, person, point, case, idea, fact, brand,
-                enjoyment, satisfaction, pleasure, delight, liking, love, combination, blend, mix, mixture, pairing, note, balance, level, presence, hint, touch, couple, side]
+                enjoyment, satisfaction, pleasure, delight, liking, love, money, quantity, amount, night, morning, evening, afternoon, week, month, year, hour, minute, second, weekend, combination, blend, mix, mixture, pairing, note, balance, level, presence, hint, touch, couple, side]
 
 # Words naming a FACET of any product (taste, texture, ...) rather than a specific subject. Two aspects with different
 # SUBJECTS (speculoos vs white chocolate) are siblings even if they share a facet ("taste"). Add your own per survey.
 facets: [taste, texture, smell, look, color, size, price, quality, center, bite, crunch, sweetness, smoothness, creaminess,
          saltiness, bitterness, sourness, aftertaste, weight, speed, appearance, packaging]
+# Verbs too vague to name an aspect or to compare as predicates.
+generic_verbs: [be, have, do, make, get, feel, find, think, come, go, take, give, seem, look, say, want, need, use, try, let, keep, leave, bring, put, see, know, like, love, hate, enjoy, appreciate]
 generic_df_ratio: 0.5       # a noun in >= 50% of all answers is treated as non-discriminative (set 1.0 to disable)
 # Nouns respondents point at with this/these/that/those are the product itself ("this cereal"): learned per dataset.
 demonstrative_min_count: 4
@@ -39,6 +41,11 @@ adjective_attributes:
   expensive: price
   cheap: price
   pricey: price
+  overpriced: price
+  underpriced: price
+  affordable: price
+  quick: speed
+  quickly: speed
   soft: texture
   hard: texture
   dark: color

@@ -64,3 +64,24 @@ def test_result_has_evidence_and_rule(cfg):
 def test_bare_conflict_is_contradiction_with_flag(cfg):
     r = label(cfg, "The taste and texture", "The taste")
     assert r.label == "CONTRADICTION" and "BARE_ASPECT_CONFLICT" in r.extra_flags
+
+
+@pytest.mark.parametrize("like,dislike,expected", [
+    ("Fast", "Slow to load", "CONTRADICTION"),
+    ("Arrived early", "Arrived late", "CONTRADICTION"),
+    ("Quiet room", "Noisy at night", "CONTRADICTION"),
+    ("I like it", "I do not like it", "CONTRADICTION"),
+    ("Intuitive", "Intuitive", "CONTRADICTION"),
+    ("The flavour combination works really well", "The flavour combination does not work for me", "CONTRADICTION"),
+    ("Very crunchy", "Not crunchy enough", "CONTRADICTION"),
+    ("Great value", "Overpriced", "CONTRADICTION"),
+    ("The filling is generous", "Not enough filling", "TENSION"),
+    ("Clear explanations", "Some explanations were unclear", "TENSION"),
+    ("Everything is great except the battery", "Battery life", "MISPLACED_NEGATIVE"),
+    ("Rich taste", "Nothing wrong with the taste, but the box was crushed on arrival", "CONSISTENT"),
+    ("Excellent", "Rien", "NO_COMPLAINT"),
+    ("Smooth and responsive", "Nothing, it works perfectly", "MISPLACED_POSITIVE"),
+    ("Tasty", "asdf", "NO_DATA"),
+])
+def test_new_domain_cases(cfg, like, dislike, expected):
+    assert label(cfg, like, dislike).label == expected

@@ -5,6 +5,7 @@ import re
 from dataclasses import dataclass, field
 
 from .aspects import ParsedClause, facet_words, relation
+from .lexicon import are_antonyms
 from .nonefilter import CONTENT, HEDGED_NONE, NODATA, NONE, NoneResult
 from .segment import Clause
 from .stance import Stance
@@ -39,12 +40,12 @@ class Candidate:
     stances: dict = field(default_factory=dict)
 
 
-def _pair_outcome(sl: Stance, sd: Stance, rel: str, bare_l: bool, bare_d: bool, min_contra: float):
+def _pair_outcome(sl: Stance, sd: Stance, rel: str, bare_l: bool, bare_d: bool, min_contra: float, l_claim: bool = False):
     """-> (label, rule_id) for one (like stance, dislike stance) with a related aspect, or None."""
+    if bare_l and bare_d:      # the same bare word in both boxes: the field priors are opposite
+        return ("CONTRADICTION", "R_BARE_BARE") if rel == "SAME" else ("TENSION", "R_BARE_PARENT_CHILD")
     if not (sl.polarity == "+" and sd.polarity == "-"):
         return None
-    if bare_l and bare_d:
-        return ("CONTRADICTION", "R_BARE_BARE") if rel == "SAME" else ("TENSION", "R_BARE_PARENT_CHILD")
     if not (sl.explicit and sd.explicit):
         return ("TENSION", "R_IMPLICIT_SIDE") if (rel == "SAME" or (rel == "PARENT_CHILD" and bare_l)) else None
     if sl.direction in POS_SIDE and sd.direction in {"NEG", "ABSENT"}:
@@ -53,14 +54,21 @@ def _pair_outcome(sl: Stance, sd: Stance, rel: str, bare_l: bool, bare_d: bool, 
         return ("TENSION", "R_POS_VS_NEG_WEAK")
     if sd.direction in {"EXCESS", "DEFICIT"}:
         # "not too sweet" vs "overly sweet": the Like side states the very thing the Dislike side denies
-        if sl.direction == "BALANCED" and sd.direction == "EXCESS" and rel == "SAME" and min(sl.strength, sd.strength) >= min_contra:
-            return ("CONTRADICTION", "R_BALANCED_VS_EXCESS")
+        if sl.direction == "BALANCED" and rel == "SAME" and min(sl.strength, sd.strength) >= min_contra:
+            return ("CONTRADICTION", "R_BALANCED_VS_AMOUNT")
+        if sl.direction == "PRESENT" and sd.direction == "DEFICIT" and rel == "SAME" and min(sl.strength, sd.strength) >= min_contra:
+            return ("CONTRADICTION", "R_PRESENT_VS_DEFICIT")
         return ("TENSION", "R_POS_VS_AMOUNT")
     return None
 
 
+def _partial(text: str, cfg: dict) -> bool:
+    low = " " + text.lower() + " "
+    return any(f" {m.lower()} " in low for m in cfg["markers"].get("partial_markers", []))
+
+
 def _specific(aspects, facets: frozenset) -> set:
-    return {n for a in aspects for n in a.nouns if n not in facets}
+    return {n for a in aspects for n in a.nouns if n not in facets and not n.startswith("@")}
 
 
 def _subject_set(ca: ClauseAnalysis, ans: AnswerAnalysis, facets: frozenset) -> set:
@@ -106,8 +114,8 @@ def decide(like: AnswerAnalysis, dis: AnswerAnalysis, cfg: dict) -> tuple[list[C
         ev = " / ".join(dk.complaint_clauses) or dis.text
         cands.append(Candidate("SELF_CONFLICT", "R_SELF_CONFLICT_" + (dk.hedge_reason or "").upper(), s, dislike_ev=ev))
     elif dk.kind == NONE:
-        praise_ev = " ".join(dk.praise_clauses)
-        if dk.has_praise and any(p.search(praise_ev) for p in pos_markers):
+        praise_ev = dis.text
+        if any(p.search(praise_ev) for p in pos_markers):
             cands.append(Candidate("MISPLACED_POSITIVE", "R_MISPLACED_POS_NONE_PRAISE", 0.9, dislike_ev=dis.text))
         else:
             cands.append(Candidate("NO_COMPLAINT", "R_NO_COMPLAINT", 0.9, dislike_ev=dis.text))
@@ -132,10 +140,12 @@ def decide(like: AnswerAnalysis, dis: AnswerAnalysis, cfg: dict) -> tuple[list[C
     dis_has_praise = any(c.stance.explicit and c.stance.polarity == "+" for c in dis.clauses)
     if dk.kind in {CONTENT, HEDGED_NONE}:
         for lc in like.clauses:
-            if lc.stance.polarity != "+" or lc.kind in {"NONE", "NODATA", "HEDGE"}:
+            l_bare = bool(lc.parsed.aspects) and all(a.bare for a in lc.parsed.aspects)
+            if (lc.stance.polarity != "+" and not l_bare) or lc.kind in {"NONE", "NODATA", "HEDGE"}:
                 continue
             for dc in dis.clauses:
-                if dc.stance.polarity != "-" or dc.kind in {"NONE", "NODATA", "HEDGE"}:
+                d_bare = bool(dc.parsed.aspects) and all(a.bare for a in dc.parsed.aspects)
+                if (dc.stance.polarity != "-" and not d_bare) or dc.kind in {"NONE", "NODATA", "HEDGE"}:
                     continue
                 if dis_has_praise and not dc.stance.explicit:
                     continue    # bare/prior-only clause inside an answer that is really praise
@@ -144,14 +154,24 @@ def decide(like: AnswerAnalysis, dis: AnswerAnalysis, cfg: dict) -> tuple[list[C
                     for da in dc.parsed.aspects:
                         rel = relation(la, da, cfg, allow_hierarchy=la.bare and da.bare)
                         rel = _refine(rel, la, da, sl_set, sd_set, facets)
-                        if rel in {"SIBLING", "UNRELATED"}:
+                        wild = "@overall" in la.nouns or "@overall" in da.nouns       # a whole-product verdict can oppose any predicate
+                        anto = (rel == "SAME" or wild) and any(are_antonyms(p, q, cfg) for p in lc.parsed.predicates for q in dc.parsed.predicates)
+                        if rel in {"SIBLING", "UNRELATED"} and not anto:
                             continue
-                        out = _pair_outcome(lc.stance, dc.stance, rel, la.bare, da.bare, min_contra)
+                        out = _pair_outcome(lc.stance, dc.stance, rel, la.bare, da.bare, min_contra,
+                                            l_claim=bool(lc.parsed.has_verb)) if rel not in {"SIBLING", "UNRELATED"} else None
+                        shared = set(lc.parsed.predicates) & set(dc.parsed.predicates)
+                        if rel == "SAME" and shared and lc.parsed.negated != dc.parsed.negated:
+                            out = ("CONTRADICTION", "R_NEGATED_PREDICATE")     # "works well" / "does not work"
+                        if anto:
+                            out = ("CONTRADICTION", "R_ANTONYM")
+                        if out and out[0] == "CONTRADICTION" and _partial(dc.clause.text, cfg):
+                            out = ("TENSION", out[1] + "_PARTIAL")             # "sometimes", "some of the..."
                         if out is None:
                             continue
                         label, rule = out
-                        base = 0.7 if rule == "R_BARE_BARE" else min(lc.stance.strength, dc.stance.strength)
-                        strength = base * w["relation_weight"][rel]
+                        base = {"R_BARE_BARE": 0.7, "R_ANTONYM": 0.75, "R_NEGATED_PREDICATE": 0.7, "R_CLAIM_VS_NEG": 0.5}.get(rule, min(lc.stance.strength, dc.stance.strength))
+                        strength = base * w["relation_weight"].get(rel, 1.0) if rel not in {"SIBLING", "UNRELATED"} else base
                         cands.append(Candidate(label, rule, strength, rel, aspect=la.head if rel == "SAME" else f"{la.head}~{da.head}",
                                                like_ev=lc.clause.text, dislike_ev=dc.clause.text,
                                                stances={"like": lc.stance.rule_id, "dislike": dc.stance.rule_id}))
